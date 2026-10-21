@@ -8,8 +8,7 @@
 </head>
 <body>
   <main>
-    <div class="stage"><canvas id="flower" width="128" height="128" aria-label="Animated pixel daisy"></canvas></div>
-    <p id="status" aria-live="polite">idle</p>
+    <div id="status" aria-live="polite"></div>
     <div class="controls" id="controls">
       <button data-state="idle" class="on">Idle</button>
       <button data-state="state1">State 1</button>
@@ -17,6 +16,12 @@
       <button data-state="stem">Stem</button>
       <button data-action="grow">Grow</button>
     </div>
+    
+    <div>
+      <canvas id="flower" width="128" height="128" aria-label="Animated pixel daisy">
+      </canvas>
+    </div>
+    
   </main>
   <script src="script.js"></script>
 </body>

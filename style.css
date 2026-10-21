@@ -1,5 +1,5 @@
 :root { 
-       --bg:#e8eee4; 
+       --bg:#8fc3ff; 
        --stage:#c8dce6; 
        --ink:#27402a;
        --accent:#4a7c34; 
@@ -24,12 +24,6 @@ main {
        align-items:center; 
        gap:14px; 
        padding:24px; 
-}
-
-.stage { 
-       background:var(--stage); 
-       border:3px solid var(--ink); 
-       padding:12px; 
 }
 
 canvas { 

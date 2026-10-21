@@ -54,7 +54,6 @@ function draw(sheet, idx) {
 
 function setActive() {
   buttons.forEach(b => b.classList.toggle('on', b.dataset.state === target));
-  statusEl.textContent = state === 'grow' ? 'growing…' : target === state ? state : `${state} → ${target}`;
 }
 
 function tick() {
