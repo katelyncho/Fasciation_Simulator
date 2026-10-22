@@ -1,3 +1,5 @@
+// ------------------------------
+
 const SIZE = 128;
 const SHEETS = {
   idle:   { src: 'sprites/idle.png',            frames: 8 },
@@ -21,7 +23,6 @@ const statusEl = document.getElementById('status');
 const meadow = document.getElementById('meadow');
 const mctx = meadow.getContext('2d');
 let bgImg = null, bgIdx = 0;
-const buttons = [...document.querySelectorAll('#controls button')];
 
 const images = {};
 let state = 'idle';     // loop currently playing (or 'grow' while the grow sequence runs)
@@ -56,10 +57,6 @@ function draw(sheet, idx) {
   if (sheet) ctx.drawImage(images[sheet], idx * SIZE, 0, SIZE, SIZE, 0, 0, SIZE, SIZE);
 }
 
-function setActive() {
-  buttons.forEach(b => b.classList.toggle('on', b.dataset.state === target));
-}
-
 function tick() {
   let item;
   if (!queue.length) {
@@ -77,7 +74,6 @@ function tick() {
     item = { sheet: state, idx: loopIdx, ms: MS.loop };
   }
   draw(item.sheet, item.idx);
-  setActive();
   setTimeout(tick, item.ms);
 }
 
@@ -106,17 +102,16 @@ function grow() {
   queue = [{ sheet: null, idx: 0, ms: 500 },     
            ...seq('grow', range(0, 18), MS.grow),
            { sheet: 'idle', idx: 0, ms: MS.loop, land: 'idle' }];
+  window.dispatchEvent(new Event('flower-reset'));   // tells face.js to unlock and re-arm
 }
 
-document.getElementById('controls').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.action === 'grow') grow();
-  else if (state !== 'grow') target = b.dataset.state;
-  else target = b.dataset.state;       // queued; applied when the grow sequence lands on idle
-  setActive();
-});
+// Used by face.js
+function setFlowerTarget(t) { if (state !== 'grow') target = t; }
+function flowerIsGrowing() { return state === 'grow'; }
+
+document.querySelector('[data-action="grow"]').addEventListener('click', grow);
 
 Promise.all([...Object.entries(SHEETS), ['bg', { src: BG.src }]].map(([k, s]) => new Promise((res, rej) => {
   const img = new Image(); img.onload = res; img.onerror = () => rej(new Error('Missing ' + s.src));
   img.src = s.src; images[k] = img;
-}))).then(() => { bgImg = images.bg; startMeadow(); tick(); }).catch(err => { statusEl.textContent = err.message + ' (serve the folder over http, e.g. python3 -m http.server)'; });
+}))).then(() => { bgImg = images.bg; startMeadow(); tick(); }).catch(err => { statusEl.hidden = false; statusEl.textContent = err.message + ' (serve the folder over http, e.g. python3 -m http.server)'; });
