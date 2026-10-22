@@ -1,4 +1,3 @@
-// ---- Config: every sheet is a horizontal strip of 128x128 frames ----
 const SIZE = 128;
 const SHEETS = {
   idle:   { src: 'sprites/idle.png',            frames: 8 },
@@ -9,14 +8,19 @@ const SHEETS = {
   toState2: { src: 'sprites/idle-to-state2.png', frames: 10 },
   grow:   { src: 'sprites/grow.png',            frames: 19 },
 };
-const GROW_BLOOM_START = 11;      // grow.png: frames 0-10 stem grows, 11-18 flower blooms
+const GROW_BLOOM_START = 11;
 const MS = { loop: 125, trans: 80, grow: 100 };
+
+const BG = { src: 'sprites/bg-idle.png', tileW: 480, frames: 8, scale: 3 };
 const LOOPS = ['idle', 'state1', 'state2', 'stem'];
 
 const canvas = document.getElementById('flower');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 const statusEl = document.getElementById('status');
+const meadow = document.getElementById('meadow');
+const mctx = meadow.getContext('2d');
+let bgImg = null, bgIdx = 0;
 const buttons = [...document.querySelectorAll('#controls button')];
 
 const images = {};
@@ -77,9 +81,29 @@ function tick() {
   setTimeout(tick, item.ms);
 }
 
+function sizeMeadow() {
+  meadow.width = Math.ceil(window.innerWidth / BG.scale);
+  meadow.height = SIZE;
+  meadow.style.width = meadow.width * BG.scale + 'px';
+  meadow.style.height = SIZE * BG.scale + 'px';
+  mctx.imageSmoothingEnabled = false;
+  drawMeadow();
+}
+function drawMeadow() {
+  mctx.clearRect(0, 0, meadow.width, SIZE);
+  for (let x = 0; x < meadow.width; x += BG.tileW) {
+    mctx.drawImage(bgImg, bgIdx * BG.tileW, 0, BG.tileW, SIZE, x, 0, BG.tileW, SIZE);
+  }
+}
+function startMeadow() {
+  sizeMeadow();
+  window.addEventListener('resize', sizeMeadow);
+  setInterval(() => { bgIdx = (bgIdx + 1) % BG.frames; drawMeadow(); }, MS.loop);
+}
+
 function grow() {
   state = 'grow'; target = 'idle'; loopIdx = 0;
-  queue = [{ sheet: null, idx: 0, ms: 500 },                      // empty ground
+  queue = [{ sheet: null, idx: 0, ms: 500 },     
            ...seq('grow', range(0, 18), MS.grow),
            { sheet: 'idle', idx: 0, ms: MS.loop, land: 'idle' }];
 }
@@ -92,8 +116,7 @@ document.getElementById('controls').addEventListener('click', e => {
   setActive();
 });
 
-// ---- Load everything, then start ----
-Promise.all(Object.entries(SHEETS).map(([k, s]) => new Promise((res, rej) => {
+Promise.all([...Object.entries(SHEETS), ['bg', { src: BG.src }]].map(([k, s]) => new Promise((res, rej) => {
   const img = new Image(); img.onload = res; img.onerror = () => rej(new Error('Missing ' + s.src));
   img.src = s.src; images[k] = img;
-}))).then(tick).catch(err => { statusEl.textContent = err.message + ' (serve the folder over http, e.g. python3 -m http.server)'; });
+}))).then(() => { bgImg = images.bg; startMeadow(); tick(); }).catch(err => { statusEl.textContent = err.message + ' (serve the folder over http, e.g. python3 -m http.server)'; });
